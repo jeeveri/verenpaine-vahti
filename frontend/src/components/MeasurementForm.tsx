@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../services/api";
+import { useRef } from "react";
 
 type MeasurementFormProps = {
   selectedUser: string;
@@ -17,11 +18,48 @@ function MeasurementForm({
   const [pulse, setPulse] = useState("");
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
-
-  const [allowTimeEdit, setAllowTimeEdit] =
-    useState(false);
+  const [allowTimeEdit, setAllowTimeEdit] = useState(false);
+  const systolicRef = useRef<HTMLInputElement>(null);
 
   const handleSave = async () => {
+    
+    // Validate required fields
+    if (
+      !systolic ||
+      !diastolic ||
+      !pulse
+    ) {
+      setMessage(
+        "Täytä SYS, DIA ja Pulssi"
+      );
+      return;
+    }
+
+    
+    const sys = Number(systolic);
+    const dia = Number(diastolic);
+    const pul = Number(pulse);
+
+    // Validate ranges
+    if (sys < 50 || sys > 300) {
+      setMessage(
+        "SYS tulee olla välillä 50-300"
+      );
+      return;
+    }
+    if (dia < 30 || dia > 200) {
+      setMessage(
+        "DIA tulee olla välillä 30-200"
+      );
+      return;
+    }
+    if (pul < 20 || pul > 250) {
+      setMessage(
+        "Pulssin tulee olla välillä 20-250"
+      );
+      return;
+    }
+
     try {
 
         await api.post(
@@ -61,6 +99,12 @@ function MeasurementForm({
     }
     };
 
+  useEffect(() => {
+  systolicRef.current?.focus();
+
+}, []);
+
+
   return (
     <div>
 
@@ -98,16 +142,21 @@ function MeasurementForm({
 
       <input
         type="number"
+        min="50"
+        max="300"
         value={systolic}
         onChange={(e) =>
           setSystolic(e.target.value)
         }
+        ref={systolicRef}
       />
 
       <h3>DIA</h3>
 
       <input
         type="number"
+        min="30"
+        max="200"
         value={diastolic}
         onChange={(e) =>
           setDiastolic(e.target.value)
@@ -118,6 +167,8 @@ function MeasurementForm({
 
       <input
         type="number"
+        min="20"
+        max="250"
         value={pulse}
         onChange={(e) =>
           setPulse(e.target.value)
@@ -154,6 +205,3 @@ function MeasurementForm({
 
 export default MeasurementForm;
 
-function onMeasurementSaved() {
-  throw new Error("Function not implemented.");
-}
