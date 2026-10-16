@@ -4,6 +4,8 @@ from .database import Base
 from .database import engine
 
 from fastapi import Depends
+from fastapi import HTTPException
+
 from sqlalchemy.orm import Session
 
 from .schemas import MeasurementCreate
@@ -60,3 +62,26 @@ def get_measurements(
     measurements = db.query(Measurement).all()
 
     return measurements
+
+@app.get(
+    "/api/measurements/{measurement_id}",
+    response_model=MeasurementResponse
+)
+def get_measurement(
+    measurement_id: int,
+    db: Session = Depends(get_db)
+):
+
+    measurement = (
+        db.query(Measurement)
+        .filter(Measurement.id == measurement_id)
+        .first()
+    )
+
+    if measurement is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Measurement not found"
+        )
+
+    return measurement
