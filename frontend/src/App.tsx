@@ -23,11 +23,23 @@ interface LatestMeasurement {
   classification: string;
 }
 
+interface Measurement {
+  id: number;
+  measurement_time: string;
+  person: string;
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+  note: string;
+}
+
 function App() {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [summary, setSummary] = useState<Record<string, SummaryItem>>({});
   const [latest, setLatest] = useState<Record<string, LatestMeasurement>>({});
   const [selectedUser, setSelectedUser] =  useState("");
+  const [measurements, setMeasurements] =  useState<Measurement[]>([]);
+
 
   const handleUserChange = (
     user: string
@@ -39,16 +51,7 @@ function App() {
     );
   };
 
-  // 1. LocalStorage: Load the selected user from local storage on component mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem("selectedUser");
-    if (savedUser) {
-      setSelectedUser(savedUser);
-    }
-  }, []);
-
-  // 2. API Calls: Fetch statistics, summary, and latest measurements on component mount
-  useEffect(() => {
+  const loadDashboardData = () => {
     api.get("/api/statistics")
       .then((response) => {
         setStats(response.data);
@@ -64,6 +67,23 @@ function App() {
       setLatest(response.data);
     });
 
+    api.get("/api/measurements")
+    .then((response) => {
+      setMeasurements(response.data);
+    });
+  };
+
+  // 1. LocalStorage: Load the selected user from local storage on component mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem("selectedUser");
+    if (savedUser) {
+      setSelectedUser(savedUser);
+    }
+  }, []);
+
+  // 2. API Calls: Fetch statistics, summary, and latest measurements on component mount
+  useEffect(() => {
+    loadDashboardData();
   }, []);
 
   if (!stats) {
@@ -109,7 +129,10 @@ function App() {
 
       <h1>Verenpaine-vahti</h1>
 
-      <MeasurementForm selectedUser={selectedUser}/>
+      <MeasurementForm
+        selectedUser={selectedUser}
+        onMeasurementSaved={loadDashboardData}
+      />
 
       <h2>Yhteenveto</h2>
 
@@ -197,6 +220,73 @@ function App() {
             )
           )
         }
+
+        <h2>Mittaushistoria</h2>
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Päivä</th>
+              <th>SYS</th>
+              <th>DIA</th>
+              <th>Pulssi</th>
+              <th>Huomio</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            {
+              measurements
+
+                .filter(
+                  measurement =>
+                    selectedUser === "Kaikki" ||
+                    measurement.person === selectedUser
+                )
+
+                .slice(0, 20)
+
+                .map(
+                  measurement => (
+                    <tr key={measurement.id}>
+
+                      <td>
+                        {
+                          new Date(
+                            measurement.measurement_time
+                          ).toLocaleDateString(
+                            "fi-FI"
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {measurement.systolic}
+                      </td>
+
+                      <td>
+                        {measurement.diastolic}
+                      </td>
+
+                      <td>
+                        {measurement.pulse}
+                      </td>
+
+                      <td>
+                        {measurement.note}
+                      </td>
+
+                    </tr>
+                  )
+                )
+
+            }
+
+          </tbody>
+
+        </table>
     </div>
   );
 }

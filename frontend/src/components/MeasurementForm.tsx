@@ -3,10 +3,12 @@ import { api } from "../services/api";
 
 type MeasurementFormProps = {
   selectedUser: string;
+  onMeasurementSaved: () => void;
 };
 
 function MeasurementForm({
   selectedUser,
+  onMeasurementSaved,
 }: MeasurementFormProps) {
 
   const now = new Date();
@@ -51,6 +53,12 @@ function MeasurementForm({
         setMessage(
         "Mittaus tallennettu onnistuneesti"
         );
+
+        setTimeout(() => {
+          setMessage("");
+        }, 3000);
+
+        onMeasurementSaved();
 
         setSystolic("");
         setDiastolic("");
@@ -178,3 +186,7 @@ function MeasurementForm({
 }
 
 export default MeasurementForm;
+
+function onMeasurementSaved() {
+  throw new Error("Function not implemented.");
+}
