@@ -186,3 +186,33 @@ def get_statistics(
         "persons": list(measurements_by_person.keys()),
         "measurements_by_person": measurements_by_person
     }
+
+@app.get("/api/statistics/summary")
+def get_measurement_summary(
+    db: Session = Depends(get_db)
+):
+
+    summary_data = (
+        db.query(
+            Measurement.person,
+            func.count(Measurement.id),
+            func.avg(Measurement.systolic),
+            func.avg(Measurement.diastolic),
+            func.avg(Measurement.pulse)
+        )
+        .group_by(Measurement.person)
+        .all()
+    )
+
+    result = {}
+
+    for row in summary_data:
+
+        result[row[0]] = {
+            "measurement_count": row[1],
+            "avg_systolic": round(row[2], 1),
+            "avg_diastolic": round(row[3], 1),
+            "avg_pulse": round(row[4], 1)
+        }
+
+    return result
