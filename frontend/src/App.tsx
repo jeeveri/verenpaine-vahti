@@ -26,7 +26,27 @@ function App() {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [summary, setSummary] = useState<Record<string, SummaryItem>>({});
   const [latest, setLatest] = useState<Record<string, LatestMeasurement>>({});
+  const [selectedUser, setSelectedUser] =  useState("");
 
+  const handleUserChange = (
+    user: string
+  ) => {
+    setSelectedUser(user);
+    localStorage.setItem(
+      "selectedUser",
+      user
+    );
+  };
+
+  // 1. LocalStorage: Load the selected user from local storage on component mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem("selectedUser");
+    if (savedUser) {
+      setSelectedUser(savedUser);
+    }
+  }, []);
+
+  // 2. API Calls: Fetch statistics, summary, and latest measurements on component mount
   useEffect(() => {
     api.get("/api/statistics")
       .then((response) => {
@@ -42,6 +62,7 @@ function App() {
     .then((response) => {
       setLatest(response.data);
     });
+
   }, []);
 
   if (!stats) {
@@ -50,6 +71,41 @@ function App() {
 
   return (
     <div style={{ padding: "2rem" }}>
+
+      <h2>Näytä tiedot</h2>
+      <label>
+        <input
+          type="radio"
+          checked={selectedUser === "Kaikki"}
+          onChange={() =>
+            handleUserChange("Kaikki")
+          }
+        />
+        Kaikki
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          checked={selectedUser === "Jesperi"}
+          onChange={() =>
+            handleUserChange("Jesperi")
+          }
+        />
+        Jesperi
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          checked={selectedUser === "Terhi"}
+          onChange={() =>
+            handleUserChange("Terhi")
+          }
+        />
+        Terhi
+      </label>
+
       <h1>Verenpaine-vahti</h1>
 
       <h2>Yhteenveto</h2>
@@ -61,7 +117,12 @@ function App() {
       <h3>Henkilöt</h3>
 
       <ul>
-        {stats.persons.map(person => (
+        {stats.persons
+         .filter(person =>
+           selectedUser === "Kaikki" ||
+            selectedUser === person
+          )        
+        .map(person => (
           <li key={person}>
             {person}: {stats.measurements_by_person[person]} mittausta
           </li>
@@ -70,7 +131,12 @@ function App() {
     
       <h2>Keskiarvot</h2>
       {
-        Object.entries(summary).map(
+        Object.entries(summary)
+        .filter(([person]) =>
+          selectedUser === "Kaikki" ||
+          selectedUser === person
+        )
+        .map(
           ([person, data]) => (
             <div key={person}>
               <h3>{person}</h3>
@@ -97,7 +163,12 @@ function App() {
 
       <h2>Viimeisimmät mittaukset</h2>
         {
-          Object.entries(latest).map(
+          Object.entries(latest)
+          .filter(([person]) =>
+            selectedUser === "Kaikki" ||
+            selectedUser === person
+          )
+          .map(
             ([person, data]) => (
               <div key={person}>
                 <h3>{person}</h3>
