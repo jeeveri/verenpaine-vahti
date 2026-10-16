@@ -18,19 +18,23 @@ from .import_service import inspect_excel
 from .import_service import read_excel_rows
 from .import_service import import_measurements
 
+from sqlalchemy import func
+
 import app.models
 
 Base.metadata.create_all(bind=engine)
 
+# Initialize FastAPI application
 app = FastAPI(
     title="Verenpaine-vahti"
 )
 
-
+# Health check endpoint
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
 
+# Create measurement endpoint
 @app.post(
     "/api/measurements",
     response_model=MeasurementResponse
@@ -152,3 +156,33 @@ def import_excel(
     )
 
     return result
+
+@app.get("/api/statistics")
+def get_statistics(
+    db: Session = Depends(get_db)
+):
+
+    total_measurements = (
+        db.query(Measurement)
+        .count()
+    )
+
+    person_counts = (
+        db.query(
+            Measurement.person,
+            func.count(Measurement.id)
+        )
+        .group_by(Measurement.person)
+        .all()
+    )
+
+    measurements_by_person = {
+        person: count
+        for person, count in person_counts
+    }
+
+    return {
+        "total_measurements": total_measurements,
+        "persons": list(measurements_by_person.keys()),
+        "measurements_by_person": measurements_by_person
+    }
