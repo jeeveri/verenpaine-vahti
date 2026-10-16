@@ -14,23 +14,35 @@ interface SummaryItem {
   avg_pulse: number;
 }
 
+interface LatestMeasurement {
+  measurement_time: string;
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+  classification: string;
+}
+
 function App() {
   const [stats, setStats] = useState<Statistics | null>(null);
-  //const [summary, setSummary] = useState<Record<string, SummaryItem> | null>(null);
   const [summary, setSummary] = useState<Record<string, SummaryItem>>({});
+  const [latest, setLatest] = useState<Record<string, LatestMeasurement>>({});
 
   useEffect(() => {
-  api.get("/api/statistics")
-    .then((response) => {
-      setStats(response.data);
-    });
+    api.get("/api/statistics")
+      .then((response) => {
+        setStats(response.data);
+      });
 
-  api.get("/api/statistics/summary")
+    api.get("/api/statistics/summary")
+      .then((response) => {
+        setSummary(response.data);
+      });
+    
+    api.get("/api/statistics/latest")
     .then((response) => {
-      setSummary(response.data);
+      setLatest(response.data);
     });
-
-}, []);
+  }, []);
 
   if (!stats) {
     return <div>Ladataan...</div>;
@@ -55,7 +67,7 @@ function App() {
           </li>
         ))}
       </ul>
-
+    
       <h2>Keskiarvot</h2>
       {
         Object.entries(summary).map(
@@ -82,6 +94,35 @@ function App() {
           )
         )
       }
+
+      <h2>Viimeisimmät mittaukset</h2>
+        {
+          Object.entries(latest).map(
+            ([person, data]) => (
+              <div key={person}>
+                <h3>{person}</h3>
+
+                <p>
+                  {data.systolic} / {data.diastolic}
+                </p>
+
+                <p>
+                  Pulssi: {data.pulse}
+                </p>
+
+                <p>
+                  Luokitus: {data.classification}
+                </p>
+
+                <p>
+                  {new Date(data.measurement_time)
+                    .toLocaleDateString("fi-FI")}
+                </p>
+
+              </div>
+            )
+          )
+        }
     </div>
   );
 }
