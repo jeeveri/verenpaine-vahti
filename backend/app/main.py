@@ -6,6 +6,8 @@ from .database import engine
 from fastapi import Depends
 from fastapi import HTTPException
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from sqlalchemy.orm import Session
 
 from .schemas import MeasurementCreate
@@ -24,9 +26,39 @@ import app.models
 
 Base.metadata.create_all(bind=engine)
 
+def classify_blood_pressure(
+    systolic: int,
+    diastolic: int
+):
+
+    if systolic >= 180 or diastolic >= 110:
+        return "Aste 3"
+
+    if systolic >= 160 or diastolic >= 100:
+        return "Aste 2"
+
+    if systolic >= 140 or diastolic >= 90:
+        return "Aste 1"
+
+    if systolic >= 130 or diastolic >= 85:
+        return "Kohonnut"
+
+    return "Normaali"
+
 # Initialize FastAPI application
 app = FastAPI(
     title="Verenpaine-vahti"
+)
+
+# CORS middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Health check endpoint
@@ -67,7 +99,13 @@ def get_measurements(
     db: Session = Depends(get_db)
 ):
 
-    measurements = db.query(Measurement).all()
+    measurements = (
+        db.query(Measurement)
+        .order_by(
+            Measurement.measurement_time.desc()
+        )
+        .all()
+    )
 
     return measurements
 
@@ -214,5 +252,48 @@ def get_measurement_summary(
             "avg_diastolic": round(row[3], 1),
             "avg_pulse": round(row[4], 1)
         }
+
+    return result
+
+@app.get("/api/statistics/latest")
+def get_latest_measurements(
+    db: Session = Depends(get_db)
+):
+
+    persons = (
+        db.query(Measurement.person)
+        .distinct()
+        .all()
+    )
+
+    result = {}
+
+    for person_tuple in persons:
+
+        person = person_tuple[0]
+
+        latest = (
+            db.query(Measurement)
+            .filter(
+                Measurement.person == person
+            )
+            .order_by(
+                Measurement.measurement_time.desc()
+            )
+            .first()
+        )
+
+        if latest:
+
+            result[person] = {
+                "measurement_time": latest.measurement_time,
+                "systolic": latest.systolic,
+                "diastolic": latest.diastolic,
+                "pulse": latest.pulse,
+                "classification": classify_blood_pressure(
+                    latest.systolic,
+                    latest.diastolic
+                )
+            }
 
     return result
