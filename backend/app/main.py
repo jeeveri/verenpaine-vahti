@@ -85,3 +85,30 @@ def get_measurement(
         )
 
     return measurement
+
+@app.delete(
+    "/api/measurements/{measurement_id}"
+)
+def delete_measurement(
+    measurement_id: int,
+    db: Session = Depends(get_db)
+):
+
+    measurement = (
+        db.query(Measurement)
+        .filter(Measurement.id == measurement_id)
+        .first()
+    )
+
+    if measurement is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Measurement not found"
+        )
+
+    db.delete(measurement)
+    db.commit()
+
+    return {
+        "status": "deleted"
+    }
