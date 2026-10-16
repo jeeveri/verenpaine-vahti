@@ -61,8 +61,23 @@ def import_measurements(path: str, db):
                 person=row[5]
             )
 
-            db.add(measurement)
+            existing = (
+                db.query(Measurement)
+                .filter(
+                    Measurement.measurement_time == row[0],
+                    Measurement.person == row[5],
+                    Measurement.systolic == row[1],
+                    Measurement.diastolic == row[2],
+                    Measurement.pulse == row[3]
+                )
+                .first()
+            )
 
+            if existing:
+                skipped += 1
+                continue
+
+            db.add(measurement)
             imported += 1
 
         except Exception:
