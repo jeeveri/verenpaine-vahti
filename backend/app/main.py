@@ -14,6 +14,10 @@ from .schemas import MeasurementResponse
 from .dependencies import get_db
 from .models import Measurement
 
+from .import_service import inspect_excel
+from .import_service import read_excel_rows
+from .import_service import import_measurements
+
 import app.models
 
 Base.metadata.create_all(bind=engine)
@@ -112,3 +116,39 @@ def delete_measurement(
     return {
         "status": "deleted"
     }
+
+@app.get("/api/import/test")
+def test_import():
+
+    headers = inspect_excel(
+        "import_data/Verenpaineen mittaus (vastaukset).xlsx"
+    )
+
+    return {
+        "headers": headers
+    }
+
+# Preview import endpoint
+@app.get("/api/import/preview")
+def preview_import():
+
+    rows = read_excel_rows(
+        "import_data/Verenpaineen mittaus (vastaukset).xlsx"
+    )
+
+    return {
+        "count": len(rows),
+        "first_rows": rows[:5]
+    }
+
+@app.post("/api/import/excel")
+def import_excel(
+    db: Session = Depends(get_db)
+):
+
+    result = import_measurements(
+        "import_data/Verenpaineen mittaus (vastaukset).xlsx",
+        db
+    )
+
+    return result
