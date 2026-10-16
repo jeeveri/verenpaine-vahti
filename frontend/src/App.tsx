@@ -7,15 +7,30 @@ interface Statistics {
   measurements_by_person: Record<string, number>;
 }
 
+interface SummaryItem {
+  measurement_count: number;
+  avg_systolic: number;
+  avg_diastolic: number;
+  avg_pulse: number;
+}
+
 function App() {
   const [stats, setStats] = useState<Statistics | null>(null);
+  //const [summary, setSummary] = useState<Record<string, SummaryItem> | null>(null);
+  const [summary, setSummary] = useState<Record<string, SummaryItem>>({});
 
   useEffect(() => {
-    api.get("/api/statistics")
-      .then((response) => {
-        setStats(response.data);
-      });
-  }, []);
+  api.get("/api/statistics")
+    .then((response) => {
+      setStats(response.data);
+    });
+
+  api.get("/api/statistics/summary")
+    .then((response) => {
+      setSummary(response.data);
+    });
+
+}, []);
 
   if (!stats) {
     return <div>Ladataan...</div>;
@@ -40,6 +55,33 @@ function App() {
           </li>
         ))}
       </ul>
+
+      <h2>Keskiarvot</h2>
+      {
+        Object.entries(summary).map(
+          ([person, data]) => (
+            <div key={person}>
+              <h3>{person}</h3>
+
+              <p>
+                Mittauksia: {data.measurement_count}
+              </p>
+
+              <p>
+                Keski SYS: {data.avg_systolic}
+              </p>
+
+              <p>
+                Keski DIA: {data.avg_diastolic}
+              </p>
+
+              <p>
+                Keski Pulssi: {data.avg_pulse}
+              </p>
+            </div>
+          )
+        )
+      }
     </div>
   );
 }
