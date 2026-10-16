@@ -21,6 +21,13 @@ function MeasurementForm({
   const [allowTimeEdit, setAllowTimeEdit] = useState(false);
   const systolicRef = useRef<HTMLInputElement>(null);
 
+  const [measurementDate, setMeasurementDate] = useState(
+    now.toISOString().split("T")[0]
+  );
+  const [measurementTime, setMeasurementTime] = useState(
+    now.toTimeString().slice(0, 5)
+  );
+
   const handleSave = async () => {
     
     // Validate required fields
@@ -67,7 +74,9 @@ function MeasurementForm({
         {
             person: selectedUser,
             measurement_time:
-            new Date().toISOString(),
+            new Date(
+              `${measurementDate}T${measurementTime}`
+            ).toISOString(),
 
             systolic: Number(systolic),
             diastolic: Number(diastolic),
@@ -118,25 +127,54 @@ function MeasurementForm({
       <h3>Mittausaika</h3>
 
       <p>
-        {now.toLocaleDateString("fi-FI")}
-        {" "}
-        {now.toLocaleTimeString("fi-FI")}
+        {
+        new Date(
+          `${measurementDate}T${measurementTime}`
+        ).toLocaleString("fi-FI")
+        }
       </p>
 
       <button
-        onClick={() =>
-          setAllowTimeEdit(!allowTimeEdit)
+      onClick={() =>
+        setAllowTimeEdit(
+          !allowTimeEdit
+        )
         }
-      >
-        Muokkaa aikaa
-      </button>
+        >
+          {
+          allowTimeEdit
+          ? "Piilota ajan muokkaus"
+          : "Muokkaa aikaa"
+          }
+          </button>
 
       {allowTimeEdit && (
-        <p>
-          Ajan muokkaus toteutetaan
-          seuraavassa vaiheessa.
-        </p>
-      )}
+        <div>
+          
+          <p>Päivämäärä</p>
+          <input
+          type="date"
+          value={measurementDate}
+          onChange={(e) =>
+            setMeasurementDate(
+              e.target.value
+            )
+          }
+          />
+
+          <p>Kellonaika</p>
+          <input
+          type="time"
+          value={measurementTime}
+          onChange={(e) =>
+            setMeasurementTime(
+              e.target.value
+            )
+          }
+          />
+          </div>
+        )
+        }
 
       <h3>SYS</h3>
 
