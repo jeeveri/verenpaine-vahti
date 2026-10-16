@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./services/api";
+import MeasurementForm from "./components/MeasurementForm";
 
 interface Statistics {
   total_measurements: number;
@@ -107,6 +108,8 @@ function App() {
       </label>
 
       <h1>Verenpaine-vahti</h1>
+
+      <MeasurementForm selectedUser={selectedUser}/>
 
       <h2>Yhteenveto</h2>
 
