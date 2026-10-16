@@ -115,7 +115,12 @@ function MeasurementForm({
 
 
   return (
-    <div>
+    <div
+    style={{
+      maxWidth: "600px"
+      }}
+      >
+
 
       <h2>Uusi mittaus</h2>
 
@@ -187,6 +192,10 @@ function MeasurementForm({
           setSystolic(e.target.value)
         }
         ref={systolicRef}
+        style={{
+          width: "100%",
+          maxWidth: "300px"
+        }}
       />
 
       <h3>DIA</h3>
@@ -199,6 +208,10 @@ function MeasurementForm({
         onChange={(e) =>
           setDiastolic(e.target.value)
         }
+        style={{
+          width: "100%",
+          maxWidth: "300px"
+        }}
       />
 
       <h3>Pulssi</h3>
@@ -211,6 +224,10 @@ function MeasurementForm({
         onChange={(e) =>
           setPulse(e.target.value)
         }
+        style={{
+          width: "100%",
+          maxWidth: "300px"
+        }}
       />
 
       <h3>Huomio</h3>
@@ -220,6 +237,10 @@ function MeasurementForm({
         onChange={(e) =>
           setNote(e.target.value)
         }
+        style={{
+          width: "100%",
+          maxWidth: "300px"
+        }}
       />
 
       <br />

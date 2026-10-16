@@ -109,7 +109,14 @@ function App() {
   }
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div
+    style={{
+      padding: "1rem",
+      maxWidth: "1200px",
+      margin: "0 auto"
+      }}
+      >
+
 
       <h1>Verenpaine-vahti</h1>
 
@@ -249,7 +256,11 @@ function App() {
       }
 
       <h2>Mittaushistoria</h2>
-
+      <div
+      style={{
+        overflowX: "auto"
+        }}
+        >
       <table>
 
         <thead>
@@ -324,6 +335,7 @@ function App() {
         </tbody>
 
       </table>
+      </div>
 
       <h2>Trendit</h2>
 
