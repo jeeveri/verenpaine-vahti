@@ -12,13 +12,6 @@ function MeasurementForm({
 }: MeasurementFormProps) {
 
   const now = new Date();
-
-  const [person, setPerson] = useState(
-    selectedUser === "Kaikki"
-      ? ""
-      : selectedUser
-  );
-
   const [systolic, setSystolic] = useState("");
   const [diastolic, setDiastolic] = useState("");
   const [pulse, setPulse] = useState("");
@@ -29,17 +22,12 @@ function MeasurementForm({
     useState(false);
 
   const handleSave = async () => {
-    if (!person) {
-        setMessage("Valitse mittaaja");
-        return;
-    }
-
     try {
 
         await api.post(
         "/api/measurements",
         {
-            person: person,
+            person: selectedUser,
             measurement_time:
             new Date().toISOString(),
 
@@ -78,31 +66,10 @@ function MeasurementForm({
 
       <h2>Uusi mittaus</h2>
 
-      <h3>Mittaaja</h3>
-
-      <label>
-        <input
-          type="radio"
-          value="Jesperi"
-          checked={person === "Jesperi"}
-          onChange={() =>
-            setPerson("Jesperi")
-          }
-        />
-        Jesperi
-      </label>
-
-      <label style={{ marginLeft: "1rem" }}>
-        <input
-          type="radio"
-          value="Terhi"
-          checked={person === "Terhi"}
-          onChange={() =>
-            setPerson("Terhi")
-          }
-        />
-        Terhi
-      </label>
+     <h3>Käyttäjä</h3>
+     <strong>
+      {selectedUser}
+      </strong>
 
       <h3>Mittausaika</h3>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./services/api";
 import MeasurementForm from "./components/MeasurementForm";
+import TrendChart from "./components/TrendChart";
 
 interface Statistics {
   total_measurements: number;
@@ -34,17 +35,28 @@ interface Measurement {
 }
 
 function App() {
-  const [stats, setStats] = useState<Statistics | null>(null);
-  const [summary, setSummary] = useState<Record<string, SummaryItem>>({});
-  const [latest, setLatest] = useState<Record<string, LatestMeasurement>>({});
-  const [selectedUser, setSelectedUser] =  useState("");
-  const [measurements, setMeasurements] =  useState<Measurement[]>([]);
 
+  const [stats, setStats] =
+    useState<Statistics | null>(null);
+
+  const [summary, setSummary] =
+    useState<Record<string, SummaryItem>>({});
+
+  const [latest, setLatest] =
+    useState<Record<string, LatestMeasurement>>({});
+
+  const [measurements, setMeasurements] =
+    useState<Measurement[]>([]);
+
+  const [selectedUser, setSelectedUser] =
+    useState("Jesperi");
 
   const handleUserChange = (
     user: string
   ) => {
+
     setSelectedUser(user);
+
     localStorage.setItem(
       "selectedUser",
       user
@@ -52,6 +64,7 @@ function App() {
   };
 
   const loadDashboardData = () => {
+
     api.get("/api/statistics")
       .then((response) => {
         setStats(response.data);
@@ -61,27 +74,32 @@ function App() {
       .then((response) => {
         setSummary(response.data);
       });
-    
+
     api.get("/api/statistics/latest")
-    .then((response) => {
-      setLatest(response.data);
-    });
+      .then((response) => {
+        setLatest(response.data);
+      });
 
     api.get("/api/measurements")
-    .then((response) => {
-      setMeasurements(response.data);
-    });
+      .then((response) => {
+        setMeasurements(response.data);
+      });
   };
 
-  // 1. LocalStorage: Load the selected user from local storage on component mount
   useEffect(() => {
-    const savedUser = localStorage.getItem("selectedUser");
-    if (savedUser) {
+
+    const savedUser =
+      localStorage.getItem("selectedUser");
+
+    if (
+      savedUser === "Jesperi" ||
+      savedUser === "Terhi"
+    ) {
       setSelectedUser(savedUser);
     }
+
   }, []);
 
-  // 2. API Calls: Fetch statistics, summary, and latest measurements on component mount
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -93,200 +111,234 @@ function App() {
   return (
     <div style={{ padding: "2rem" }}>
 
-      <h2>Näytä tiedot</h2>
-      <label>
-        <input
-          type="radio"
-          checked={selectedUser === "Kaikki"}
-          onChange={() =>
-            handleUserChange("Kaikki")
-          }
-        />
-        Kaikki
-      </label>
-
-      <label>
-        <input
-          type="radio"
-          checked={selectedUser === "Jesperi"}
-          onChange={() =>
-            handleUserChange("Jesperi")
-          }
-        />
-        Jesperi
-      </label>
-
-      <label>
-        <input
-          type="radio"
-          checked={selectedUser === "Terhi"}
-          onChange={() =>
-            handleUserChange("Terhi")
-          }
-        />
-        Terhi
-      </label>
-
       <h1>Verenpaine-vahti</h1>
+
+      <h3>Käyttäjä</h3>
+
+      <select
+        value={selectedUser}
+        onChange={(e) =>
+          handleUserChange(
+            e.target.value
+          )
+        }
+      >
+        <option value="Jesperi">
+          Jesperi
+        </option>
+
+        <option value="Terhi">
+          Terhi
+        </option>
+      </select>
 
       <MeasurementForm
         selectedUser={selectedUser}
-        onMeasurementSaved={loadDashboardData}
+        onMeasurementSaved={
+          loadDashboardData
+        }
       />
 
       <h2>Yhteenveto</h2>
 
       <p>
-        Mittauksia yhteensä: {stats.total_measurements}
+        Mittauksia yhteensä:
+        {" "}
+        {stats.measurements_by_person[
+          selectedUser
+        ]}
       </p>
 
-      <h3>Henkilöt</h3>
-
-      <ul>
-        {stats.persons
-         .filter(person =>
-           selectedUser === "Kaikki" ||
-            selectedUser === person
-          )        
-        .map(person => (
-          <li key={person}>
-            {person}: {stats.measurements_by_person[person]} mittausta
-          </li>
-        ))}
-      </ul>
-    
       <h2>Keskiarvot</h2>
+
       {
-        Object.entries(summary)
-        .filter(([person]) =>
-          selectedUser === "Kaikki" ||
-          selectedUser === person
-        )
-        .map(
-          ([person, data]) => (
-            <div key={person}>
-              <h3>{person}</h3>
+        summary[selectedUser] && (
+          <div>
 
-              <p>
-                Mittauksia: {data.measurement_count}
-              </p>
+            <h3>{selectedUser}</h3>
 
-              <p>
-                Keski SYS: {data.avg_systolic}
-              </p>
+            <p>
+              Mittauksia:
+              {" "}
+              {
+                summary[selectedUser]
+                  .measurement_count
+              }
+            </p>
 
-              <p>
-                Keski DIA: {data.avg_diastolic}
-              </p>
+            <p>
+              Keski SYS:
+              {" "}
+              {
+                summary[selectedUser]
+                  .avg_systolic
+              }
+            </p>
 
-              <p>
-                Keski Pulssi: {data.avg_pulse}
-              </p>
-            </div>
-          )
+            <p>
+              Keski DIA:
+              {" "}
+              {
+                summary[selectedUser]
+                  .avg_diastolic
+              }
+            </p>
+
+            <p>
+              Keski Pulssi:
+              {" "}
+              {
+                summary[selectedUser]
+                  .avg_pulse
+              }
+            </p>
+
+          </div>
         )
       }
 
-      <h2>Viimeisimmät mittaukset</h2>
-        {
-          Object.entries(latest)
-          .filter(([person]) =>
-            selectedUser === "Kaikki" ||
-            selectedUser === person
-          )
-          .map(
-            ([person, data]) => (
-              <div key={person}>
-                <h3>{person}</h3>
+      <h2>Viimeisin mittaus</h2>
 
-                <p>
-                  {data.systolic} / {data.diastolic}
-                </p>
+      {
+        latest[selectedUser] && (
+          <div>
 
-                <p>
-                  Pulssi: {data.pulse}
-                </p>
+            <p>
+              {
+                latest[selectedUser]
+                  .systolic
+              }
+              {" / "}
+              {
+                latest[selectedUser]
+                  .diastolic
+              }
+            </p>
 
-                <p>
-                  Luokitus: {data.classification}
-                </p>
+            <p>
+              Pulssi:
+              {" "}
+              {
+                latest[selectedUser]
+                  .pulse
+              }
+            </p>
 
-                <p>
-                  {new Date(data.measurement_time)
-                    .toLocaleDateString("fi-FI")}
-                </p>
+            <p>
+              Luokitus:
+              {" "}
+              {
+                latest[selectedUser]
+                  .classification
+              }
+            </p>
 
-              </div>
+            <p>
+              {
+                new Date(
+                  latest[selectedUser]
+                    .measurement_time
+                ).toLocaleDateString(
+                  "fi-FI"
+                )
+              }
+            </p>
+
+          </div>
+        )
+      }
+
+      <h2>Mittaushistoria</h2>
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Päivä</th>
+            <th>SYS</th>
+            <th>DIA</th>
+            <th>Pulssi</th>
+            <th>Huomio</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {
+            measurements
+
+              .filter(
+                measurement =>
+                  measurement.person ===
+                  selectedUser
+              )
+
+              .slice(0, 20)
+
+              .map(
+                measurement => (
+                  <tr
+                    key={measurement.id}
+                  >
+
+                    <td>
+                      {
+                        new Date(
+                          measurement.measurement_time
+                        ).toLocaleDateString(
+                          "fi-FI"
+                        )
+                      }
+                    </td>
+
+                    <td>
+                      {
+                        measurement.systolic
+                      }
+                    </td>
+
+                    <td>
+                      {
+                        measurement.diastolic
+                      }
+                    </td>
+
+                    <td>
+                      {
+                        measurement.pulse
+                      }
+                    </td>
+
+                    <td>
+                      {
+                        measurement.note
+                      }
+                    </td>
+
+                  </tr>
+                )
+              )
+
+          }
+
+        </tbody>
+
+      </table>
+
+      <h2>Trendit</h2>
+
+      <TrendChart
+        measurements={
+          measurements
+            .filter(
+              measurement =>
+                measurement.person ===
+                selectedUser
             )
-          )
+            .slice(0, 50)
         }
+      />
 
-        <h2>Mittaushistoria</h2>
-
-        <table>
-
-          <thead>
-            <tr>
-              <th>Päivä</th>
-              <th>SYS</th>
-              <th>DIA</th>
-              <th>Pulssi</th>
-              <th>Huomio</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {
-              measurements
-
-                .filter(
-                  measurement =>
-                    selectedUser === "Kaikki" ||
-                    measurement.person === selectedUser
-                )
-
-                .slice(0, 20)
-
-                .map(
-                  measurement => (
-                    <tr key={measurement.id}>
-
-                      <td>
-                        {
-                          new Date(
-                            measurement.measurement_time
-                          ).toLocaleDateString(
-                            "fi-FI"
-                          )
-                        }
-                      </td>
-
-                      <td>
-                        {measurement.systolic}
-                      </td>
-
-                      <td>
-                        {measurement.diastolic}
-                      </td>
-
-                      <td>
-                        {measurement.pulse}
-                      </td>
-
-                      <td>
-                        {measurement.note}
-                      </td>
-
-                    </tr>
-                  )
-                )
-
-            }
-
-          </tbody>
-
-        </table>
     </div>
   );
 }
